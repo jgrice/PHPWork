@@ -536,22 +536,26 @@ static zend_always_inline int fast_increment_function(zval *op1)
 			  "n"(IS_DOUBLE),
 			  "n"(ZVAL_OFFSETOF_TYPE)
 			: "cc");
- #elif defined(__aarch64__) && defined(__GNUC__)
+  #elif defined(__aarch64__) && defined(__GNUC__)
 		__asm__(
-			"add %0, %0, #1\n\t"
+			"ldr x3, [%0, 0]\n\t"
+			"add x3, x3, #1\n\t"
+			"str x3, [%0, 0]\n\t"
 			"bvc  0f\n\t"
-			"mov %0, #0x0\n\t"
-			"ldr x3, [%0, 0x4]\n\t"
-			"mov x3, #0x43e00000\n\t"
-			"ldr x3, [%0, %c2]\n\t"
-			"mov x3, %1\n\t"
+			//"str x3, [%0, 0]\n\t"						
+			"mov x4, #0x43e00000\n\t"
+			"str x4, [%0, 0x4]\n\t"
+			"mov w5, %1\n\t"
+			"strb w5, [%0, %c2]\n\t"			
 			"0:"
 			:
 			: "r"(&op1->value),
 			  "n"(IS_DOUBLE),
 			  "n"(ZVAL_OFFSETOF_TYPE)
 			: "cc",
-			  "x3"); 
+			  "x3",
+			  "x4",
+			  "w5"); 
 #else
 		if (UNEXPECTED(Z_LVAL_P(op1) == LONG_MAX)) {
 			/* switch to double */
@@ -597,20 +601,24 @@ static zend_always_inline int fast_decrement_function(zval *op1)
 			: "cc");
 #elif defined(__aarch64__) && defined(__GNUC__)
 		__asm__(
-			"sub %0, %0, #1\n\t"
+			"ldr x3, [%0, 0]\n\t"
+			"sub x3, x3, #1\n\t"
+			"str x3, [%0, 0]\n\t"
 			"bvc  0f\n\t"
-			"mov %0, #0x00000000\n\t"
-			"ldr x3, [%0, 0x4]\n\t" 
-			"mov x3, #0xc3e00000\n\t"
-			"ldr x3, [%0, %c2]\n\t"
-			"mov x3, %1\n\t"
+			//"str x3, [%0, 0]\n\t"						
+			"mov x4, #0xc3e00000\n\t"
+			"str x4, [%0, 0x4]\n\t"
+			"mov w5, %1\n\t"
+			"strb w5, [%0, %c2]\n\t"
 			"0:"
 			:
 			: "r"(&op1->value),
 			  "n"(IS_DOUBLE),
 			  "n"(ZVAL_OFFSETOF_TYPE)
 			: "cc",
-			  "x3"); 
+			  "w3",
+			  "w4",
+			  "w5");
 #else
 		if (UNEXPECTED(Z_LVAL_P(op1) == LONG_MIN)) {
 			/* switch to double */
